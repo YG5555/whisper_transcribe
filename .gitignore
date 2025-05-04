@@ -1,0 +1,12 @@
+# 仮想環境
+venv/
+whisper_env/
+
+# Pythonキャッシュ
+__pycache__/
+*.pyc
+
+# 一時ファイルや出力
+audio/
+audio_archive/
+output/.env
