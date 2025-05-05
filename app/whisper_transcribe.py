@@ -92,3 +92,8 @@ def transcribe_api():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"予期しないエラー: {e}")
         
+
+# ルートエンドポイント
+@app.get("/")
+def root():
+    return {"message": "App is running!"}
