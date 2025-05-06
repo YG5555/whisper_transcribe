@@ -9,4 +9,7 @@ __pycache__/
 # 一時ファイルや出力
 audio/
 audio_archive/
-output/.env
+output/
+
+#セキュリティ
+.env
