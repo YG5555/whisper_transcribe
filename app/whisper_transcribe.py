@@ -70,14 +70,29 @@ def run_transcription():
 if __name__ == "__main__":
     run_transcription()
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import JSONResponse
 from app.gradio_ui import transcribe_gradio_ui
 import gradio as gr
+from dotenv import load_dotenv
+import os
+
+# .env読み込み
+load_dotenv()
+username = os.getenv("BASIC_USER")
+password = os.getenv("BASIC_PASS")
 
 app = FastAPI()
 
 gradio_app = transcribe_gradio_ui()
-app = gr.mount_gradio_app(app, gradio_app, path="/")
+
+# 認証情報を.envから読み込んで適用
+app = gr.mount_gradio_app(
+    app,
+    gradio_app,
+    path="/",
+    auth=(username, password)
+)
 
 @app.post("/transcribe")
 def transcribe_api():

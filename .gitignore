@@ -10,3 +10,4 @@ __pycache__/
 audio/
 audio_archive/
 output/.env
+.env

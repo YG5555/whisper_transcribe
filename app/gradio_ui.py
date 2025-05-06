@@ -1,5 +1,5 @@
 import gradio as gr
-from whisper_transcribe import run_transcription
+from app.whisper_transcribe import run_transcription
 import shutil
 import time
 
