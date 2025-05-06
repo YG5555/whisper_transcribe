@@ -6,7 +6,7 @@
 
 ## 🏗 システム構成（3層アーキテクチャ）
 
-![構成図](images/)  
+![構成図](images/system_architecture)  
 ※Gradio：Pythonコードを簡単にWeb UI化できるツール
 
 - **プレゼンテーション層**（Gradio）  
