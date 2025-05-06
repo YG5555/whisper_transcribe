@@ -70,11 +70,14 @@ def run_transcription():
 if __name__ == "__main__":
     run_transcription()
 
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI
+from app.gradio_ui import transcribe_gradio_ui
+import gradio as gr
 
-#API化
 app = FastAPI()
+
+gradio_app = transcribe_gradio_ui()
+app = gr.mount_gradio_app(app, gradio_app, path="/")
 
 @app.post("/transcribe")
 def transcribe_api():
@@ -91,9 +94,4 @@ def transcribe_api():
         raise HTTPException(status_code=500, detail=f"Whisperエラー: {e}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"予期しないエラー: {e}")
-        
-
-# ルートエンドポイント
-@app.get("/")
-def root():
-    return {"message": "App is running!"}
+    
