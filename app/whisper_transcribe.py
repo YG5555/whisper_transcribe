@@ -18,7 +18,10 @@ from fastapi.responses import JSONResponse
 from fastapi import HTTPException
 from app.gradio_ui import transcribe_gradio_ui
 import gradio as gr
-from app.upload_api import router as upload_router
+from app.transcriber_core import run_transcription
+
+def transcribe_file(file_path: str) -> tuple[dict, str]:
+    return run_transcription(file_path)
 
 #関数化
 def run_transcription():

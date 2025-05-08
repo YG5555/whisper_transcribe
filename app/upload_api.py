@@ -1,29 +1,30 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException
-from fastapi.responses import JSONResponse
-from app.transcriber import run_transcription
-
+from fastapi import APIRouter, UploadFile, File
+import shutil
 import os
+from app.transcriber_core import run_transcription
 
 router = APIRouter()
 
 @router.post("/upload")
 async def upload_audio(file: UploadFile = File(...)):
     try:
-        # 一時パスへ保存
-        tmp_path = f"/tmp/{file.filename}"
-        with open(tmp_path, "wb") as f:
-            f.write(await file.read())
+        temp_file_path = f"/tmp/{file.filename}"
+        file.file.seek(0)
+        with open(temp_file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
 
-        # 文字起こし実行
-        output_json, output_txt = run_transcription(audio_file_path=tmp_path)
+        if not os.path.exists(temp_file_path):
+            return {"error": f"保存に失敗: {temp_file_path} が存在しません"}
 
-        return JSONResponse(content={
-            "status": "success",
-            "json_result": output_json,
-            "text_result": output_txt
-        })
+        json_result, text_result = run_transcription(temp_file_path)
+        os.remove(temp_file_path)
 
-    except FileNotFoundError as e:
-        raise HTTPException(status_code=404, detail=f"ファイルが見つかりません: {e}")
+        return {
+            "text": text_result,
+            "raw": json_result
+        }
+
+    except FileNotFoundError:
+        return {"error": "ファイルが見つかりませんでした"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"エラー: {e}")
+        return {"error": str(e)}

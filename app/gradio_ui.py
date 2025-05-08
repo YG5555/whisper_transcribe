@@ -1,5 +1,5 @@
 import gradio as gr
-from app.whisper_transcribe import run_transcription
+from app.transcriber_core import run_transcription
 import shutil
 import time
 
@@ -9,7 +9,7 @@ def transcribe_with_status(filepath):
     global status_textbox
     if status_textbox is not None:
         status_textbox.update(value="ステータス: 音声ファイルをコピー中...")
-    shutil.copy(filepath, "../audio/input_audio.wav")
+    shutil.copy(filepath, "audio/input_audio.wav")
     time.sleep(0.5)
 
     if status_textbox is not None:
