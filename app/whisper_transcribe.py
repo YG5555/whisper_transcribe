@@ -13,6 +13,13 @@ import whisper
 import json
 import shutil
 
+from fastapi import FastAPI
+from fastapi.responses import JSONResponse
+from fastapi import HTTPException
+from app.gradio_ui import transcribe_gradio_ui
+import gradio as gr
+from app.upload_api import router as upload_router
+
 #関数化
 def run_transcription():
     # フォルダ設定
@@ -70,11 +77,9 @@ def run_transcription():
 if __name__ == "__main__":
     run_transcription()
 
-from fastapi import FastAPI
-from app.gradio_ui import transcribe_gradio_ui
-import gradio as gr
-
 app = FastAPI()
+
+app.include_router(upload_router, prefix="/api")
 
 gradio_app = transcribe_gradio_ui()
 app = gr.mount_gradio_app(app, gradio_app, path="/")
@@ -94,4 +99,3 @@ def transcribe_api():
         raise HTTPException(status_code=500, detail=f"Whisperエラー: {e}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"予期しないエラー: {e}")
-    
