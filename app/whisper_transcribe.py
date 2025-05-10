@@ -1,8 +1,7 @@
-#文字起こしのみ
-
-#仮想環境
+# 仮想環境のPythonを指定
 #!/Users/yg/projects/whisper_diarization/whisper_env/bin/python
 
+# SSL認証を無効化（必要に応じて使用）
 #SSLの認証
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -13,6 +12,7 @@ import whisper
 import json
 import shutil
 
+# FastAPIの構成要素や外部UI、ルーターをインポート
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from fastapi import HTTPException
@@ -20,7 +20,7 @@ from app.gradio_ui import transcribe_gradio_ui
 import gradio as gr
 from app.upload_api import router as upload_router
 
-#関数化
+# 音声ファイルの文字起こしを実行するメイン関数
 def run_transcription():
     # フォルダ設定
     BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -31,12 +31,12 @@ def run_transcription():
     # 対象ファイル拡張子
     EXTENSIONS = ["*.wav", "*.mp3", "*.m4a"]
 
-    # 音声ファイルリスト作成
+    # 指定ディレクトリ内の音声ファイルを収集
     audio_files = [f for ext in EXTENSIONS for f in glob.glob(os.path.join(AUDIO_DIR, ext))]
     if not audio_files:
         raise FileNotFoundError("audioフォルダに音声ファイルがありません")
 
-    # 最新のファイルを選択
+    # 最も新しい音声ファイルを選択
     audio_file_path = max(audio_files, key=os.path.getmtime)
 
     # ファイル名取得（拡張子なし）
@@ -45,10 +45,10 @@ def run_transcription():
     # Whisperモデルロード
     model = whisper.load_model("medium")
 
-    # 文字起こし実行
+    # Whisperを使って文字起こしを実行（日本語）
     result = model.transcribe(audio_file_path, language="ja", verbose=False)
 
-    # 出力フォルダ作成
+    # 出力先ディレクトリを作成（存在しなければ）
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
     # JSONファイルに保存
@@ -56,7 +56,7 @@ def run_transcription():
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(result, f, ensure_ascii=False, indent=2)
 
-    # テキストファイルにも保存
+    # テキストとして結果を保存（タイムスタンプ付き）
     text_output_path = os.path.join(OUTPUT_DIR, f"{file_name}_result.txt")
     with open(text_output_path, "w", encoding="utf-8") as f:
         # まず元ファイル名を書く
@@ -67,7 +67,7 @@ def run_transcription():
             end = segment["end"]
             f.write(f"[{start:.2f} - {end:.2f}]\n")
 
-    # 入力音声ファイルもaudio_archiveへ移動
+    # 処理済みファイルをアーカイブフォルダへ移動
     os.makedirs(AUDIO_ARCHIVE_DIR, exist_ok=True)
     shutil.move(audio_file_path, os.path.join(AUDIO_ARCHIVE_DIR, os.path.basename(audio_file_path)))
 
@@ -77,13 +77,16 @@ def run_transcription():
 if __name__ == "__main__":
     run_transcription()
 
+# FastAPIアプリケーションを作成
 app = FastAPI()
 
 app.include_router(upload_router, prefix="/api")
 
+# Gradio UIアプリを生成
 gradio_app = transcribe_gradio_ui()
 app = gr.mount_gradio_app(app, gradio_app, path="/")
 
+# API経由で文字起こしを行うエンドポイント
 @app.post("/transcribe")
 def transcribe_api():
     try:
