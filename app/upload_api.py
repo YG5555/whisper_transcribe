@@ -3,7 +3,7 @@ from fastapi import APIRouter, UploadFile, File, HTTPException
 # レスポンス形式としてJSONを使用
 from fastapi.responses import JSONResponse
 # 音声文字起こしの関数をインポート
-from app.transcriber import run_transcription
+from app.core.transcriber import run_transcription_basic
 
 import os
 
@@ -20,7 +20,7 @@ async def upload_audio(file: UploadFile = File(...)):
             f.write(await file.read())
 
         # 文字起こし処理を実行し、結果を取得
-        output_json, output_txt = run_transcription(audio_file_path=tmp_path)
+        output_json, output_txt = run_transcription_basic(audio_file_path=tmp_path)
 
         # 成功レスポンスとして結果をJSON形式で返す
         return JSONResponse(content={

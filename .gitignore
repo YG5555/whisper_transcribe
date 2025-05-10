@@ -10,6 +10,7 @@ __pycache__/
 audio/
 audio_archive/
 output/
+.DS_Store
 
 #セキュリティ
 .env

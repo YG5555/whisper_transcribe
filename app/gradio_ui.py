@@ -1,7 +1,7 @@
 # Gradioライブラリをインポート（UI構築用）
 import gradio as gr
 # 文字起こし処理を行う関数をインポート
-from app.whisper_transcribe import run_transcription
+from app.core.transcriber import run_transcription_basic
 # ファイル操作用モジュールをインポート
 import shutil
 # 処理の待機時間を挿入するためのモジュールをインポート
@@ -21,7 +21,7 @@ def transcribe_with_status(filepath):
 
     if status_textbox is not None:
         status_textbox.update(value="ステータス: Whisperで文字起こし中...")
-    _, text_path = run_transcription()
+    _, text_path = run_transcription_basic()
 
     if status_textbox is not None:
         status_textbox.update(value="ステータス: 完了しました。")
