@@ -22,9 +22,6 @@ from app.gradio_ui import transcribe_gradio_ui
 import gradio as gr
 from app.upload_api import router as upload_router
 
-if __name__ == "__main__":
-    run_transcription()
-
 # FastAPIアプリケーションを作成
 app = FastAPI()
 
@@ -50,3 +47,7 @@ def transcribe_api():
         raise HTTPException(status_code=500, detail=f"Whisperエラー: {e}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"予期しないエラー: {e}")
+
+if __name__ == "__main__":
+    output_path = run_transcription()
+    print(f"文字起こし完了: {output_path}")
