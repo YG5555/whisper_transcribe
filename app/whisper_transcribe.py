@@ -12,6 +12,8 @@ import whisper
 import json
 import shutil
 
+from app.core.transcriber import run_transcription_basic as run_transcription
+
 # FastAPIの構成要素や外部UI、ルーターをインポート
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
@@ -19,60 +21,6 @@ from fastapi import HTTPException
 from app.gradio_ui import transcribe_gradio_ui
 import gradio as gr
 from app.upload_api import router as upload_router
-
-# 音声ファイルの文字起こしを実行するメイン関数
-def run_transcription():
-    # フォルダ設定
-    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    AUDIO_DIR = os.path.join(BASE_DIR, "audio")
-    OUTPUT_DIR = os.path.join(BASE_DIR, "output")
-    AUDIO_ARCHIVE_DIR = os.path.join(BASE_DIR, "audio_archive")
-
-    # 対象ファイル拡張子
-    EXTENSIONS = ["*.wav", "*.mp3", "*.m4a"]
-
-    # 指定ディレクトリ内の音声ファイルを収集
-    audio_files = [f for ext in EXTENSIONS for f in glob.glob(os.path.join(AUDIO_DIR, ext))]
-    if not audio_files:
-        raise FileNotFoundError("audioフォルダに音声ファイルがありません")
-
-    # 最も新しい音声ファイルを選択
-    audio_file_path = max(audio_files, key=os.path.getmtime)
-
-    # ファイル名取得（拡張子なし）
-    file_name = os.path.splitext(os.path.basename(audio_file_path))[0]
-
-    # Whisperモデルロード
-    model = whisper.load_model("medium")
-
-    # Whisperを使って文字起こしを実行（日本語）
-    result = model.transcribe(audio_file_path, language="ja", verbose=False)
-
-    # 出力先ディレクトリを作成（存在しなければ）
-    os.makedirs(OUTPUT_DIR, exist_ok=True)
-
-    # JSONファイルに保存
-    output_path = os.path.join(OUTPUT_DIR, f"{file_name}_result.json")
-    with open(output_path, "w", encoding="utf-8") as f:
-        json.dump(result, f, ensure_ascii=False, indent=2)
-
-    # テキストとして結果を保存（タイムスタンプ付き）
-    text_output_path = os.path.join(OUTPUT_DIR, f"{file_name}_result.txt")
-    with open(text_output_path, "w", encoding="utf-8") as f:
-        # まず元ファイル名を書く
-        f.write(f"[元ファイル名: {file_name}]\n\n")
-        # そのあとセグメントごとの開始・終了時刻を書く
-        for segment in result["segments"]:
-            start = segment["start"]
-            end = segment["end"]
-            f.write(f"[{start:.2f} - {end:.2f}]\n")
-
-    # 処理済みファイルをアーカイブフォルダへ移動
-    os.makedirs(AUDIO_ARCHIVE_DIR, exist_ok=True)
-    shutil.move(audio_file_path, os.path.join(AUDIO_ARCHIVE_DIR, os.path.basename(audio_file_path)))
-
-    print(f"✅ 文字起こし完了: {output_path} と {text_output_path}")
-    return output_path, text_output_path
 
 if __name__ == "__main__":
     run_transcription()
