@@ -1,0 +1,24 @@
+# 仮想環境
+venv/
+whisper_env/
+
+# Pythonキャッシュ
+__pycache__/
+*.pyc
+
+# 一時ファイルや出力
+audio/
+audio_archive/
+output/
+.DS_Store
+
+# セキュリティ
+.env
+
+# Node.js "部品" フォルダ
+frontend/node_modules
+
+# --- 究極の Node/Cache 除外ルール ---
+**/node_modules/
+**/.npm-cache/
+**/.DS_Store

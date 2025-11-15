@@ -1,0 +1,142 @@
+services:
+  - type: web
+    name: whisper-transcribe
+    env: python
+    plan: free
+    buildCommand: |
+      echo "=== ビルド開始 ==="
+      echo "Node.js バージョン: $(node --version)"
+      echo "npm バージョン: $(npm --version)"
+      echo "Python バージョン: $(python --version)"
+
+      # フロントエンドをビルド（本番はビルド段階で作る）
+      echo "=== フロントエンドビルド開始 ==="
+      cd frontend
+      # Rollupのネイティブモジュール問題を回避
+      rm -rf node_modules package-lock.json
+      # オプショナル依存関係を除外してインストール
+      npm install --omit=optional --no-audit --no-fund
+      # ビルドを試行（失敗した場合は手動でファイルを作成）
+      npm run build || (echo "ビルドに失敗しました。フォールバックファイルを作成します。" && cd .. && chmod +x create-fallback-frontend.sh && ./create-fallback-frontend.sh && cd frontend)
+
+      # フロントエンドディレクトリに戻る
+      cd ..
+      
+      # バックエンド依存関係インストール
+      echo "=== バックエンド依存関係インストール ==="
+      cd backend
+      pip install -r requirements.txt
+
+      # フロントエンドのビルド結果をバックエンドディレクトリにコピー
+      echo "=== フロントエンドビルド結果をコピー ==="
+      mkdir -p static
+      cp -r ../frontend/dist/* static/
+      
+      # 静的ファイルの内容を確認
+      echo "=== 静的ファイルの内容 ==="
+      ls -la static/
+      ls -la static/assets/ || echo "assetsディレクトリが見つかりません"
+      
+      # index.htmlの内容を確認
+      echo "=== index.htmlの内容 ==="
+      head -10 static/index.html || echo "index.htmlが見つかりません"
+      
+      # アセットファイルの内容を確認
+      echo "=== アセットファイルの内容 ==="
+      ls -la static/assets/ || echo "assetsディレクトリが見つかりません"
+      if [ -f "static/assets/index-BLqfF7NK.js" ]; then
+        echo "JavaScriptファイルが見つかりました"
+        wc -l static/assets/index-BLqfF7NK.js
+      else
+        echo "JavaScriptファイルが見つかりません"
+      fi
+      
+      # 静的ファイルのパーミッションを確認
+      echo "=== 静的ファイルのパーミッション ==="
+      ls -la static/
+      ls -la static/assets/ || echo "assetsディレクトリが見つかりません"
+      
+      # 静的ファイルのパーミッションを設定
+      echo "=== 静的ファイルのパーミッションを設定 ==="
+      chmod -R 644 static/
+      find static/ -type d -exec chmod 755 {} \;
+      
+      # 静的ファイルのサイズを確認
+      echo "=== 静的ファイルのサイズ ==="
+      du -sh static/
+      du -sh static/assets/ || echo "assetsディレクトリが見つかりません"
+      
+      # 静的ファイルの内容を最終確認
+      echo "=== 静的ファイルの内容を最終確認 ==="
+      find static/ -type f -exec echo "{}" \;
+      
+      # ファイル名の不一致を自動修正
+      echo "=== ファイル名の不一致を自動修正 ==="
+      # 利用可能なJavaScriptファイルを確認
+      JS_FILES=$(ls static/assets/*.js 2>/dev/null)
+      if [ -n "$JS_FILES" ]; then
+        JS_FILE=$(echo "$JS_FILES" | head -1)
+        JS_FILENAME=$(basename "$JS_FILE")
+        echo "見つかったJavaScriptファイル: $JS_FILENAME"
+        
+        # index.htmlを正しいファイル名に更新
+        sed -i "s/index-[A-Za-z0-9]*\.js/$JS_FILENAME/g" static/index.html
+        echo "index.htmlを $JS_FILENAME に更新しました"
+      fi
+      
+      # 利用可能なCSSファイルを確認
+      CSS_FILES=$(ls static/assets/*.css 2>/dev/null)
+      if [ -n "$CSS_FILES" ]; then
+        CSS_FILE=$(echo "$CSS_FILES" | head -1)
+        CSS_FILENAME=$(basename "$CSS_FILE")
+        echo "見つかったCSSファイル: $CSS_FILENAME"
+        
+        # index.htmlを正しいファイル名に更新
+        sed -i "s/index-[A-Za-z0-9]*\.css/$CSS_FILENAME/g" static/index.html
+        echo "index.htmlのCSSを $CSS_FILENAME に更新しました"
+      fi
+      
+      # 修正後のindex.htmlの内容を確認
+      echo "=== 修正後のindex.htmlの内容 ==="
+      head -15 static/index.html
+      
+      # 確認ポイント: 重要なファイルの存在確認
+      echo "=== 確認ポイント: 重要なファイルの存在確認 ==="
+      echo "index.html: $(test -f static/index.html && echo 'OK' || echo 'NG')"
+      echo "vite.svg: $(test -f static/vite.svg && echo 'OK' || echo 'NG')"
+      echo "assets dir: $(test -d static/assets && echo 'OK' || echo 'NG')"
+      echo "JS files: $(ls static/assets/*.js 2>/dev/null | wc -l) files found"
+      echo "CSS files: $(ls static/assets/*.css 2>/dev/null | wc -l) files found"
+      
+      # ファイルの内容確認
+      echo "=== ファイルの内容確認 ==="
+      if [ -f "static/index.html" ]; then
+        echo "index.htmlの先頭10行:"
+        head -10 static/index.html
+      fi
+      
+      if [ -f "static/assets/index-BLqfF7NK.js" ]; then
+        echo "JavaScriptファイルの先頭3行:"
+        head -3 static/assets/index-BLqfF7NK.js
+      fi
+
+      echo "=== ビルド完了 ==="
+    startCommand: |
+      echo "=== Whisper Transcribe 起動開始 ==="
+      export PYTHONPATH=./backend
+      cd backend
+      echo "=== バックエンド起動 ==="
+      echo "=== ポート: $PORT ==="
+      uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --timeout-keep-alive 75
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: NODE_VERSION
+        value: 18.19.0
+      - key: PORT
+        value: 8000
+      - key: NODE_OPTIONS
+        value: "--max-old-space-size=256"
+      - key: VITE_API_BASE
+        value: "https://whisper-transcribe-mdxq.onrender.com"

@@ -1,0 +1,31 @@
+@startuml
+actor User
+participant "Frontend (React)" as FE
+participant "Backend API (FastAPI)" as BE
+database "Temporary Storage\n(In-Memory / TempDir)" as TMP
+participant "Whisper Transcriber" as Whisper
+
+User -> FE : 音声ファイルを選択・アップロード
+FE -> BE : POST /upload (multipart/form-data)
+BE -> TMP : ファイルを一時保存
+BE -> FE : ファイルID(UUID)を返却
+
+User -> FE : 文字起こしボタンを押下
+FE -> BE : POST /transcribe (file_id)
+BE -> TMP : 該当ファイルを読み取り
+BE -> Whisper : 音声をテキスト化
+Whisper -> BE : テキストデータ返却
+BE -> TMP : 一時的にテキストを保存
+BE -> FE : 処理完了レスポンス（status: done）
+
+User -> FE : 結果画面を開く
+FE -> BE : GET /result/{id}
+BE -> TMP : テキスト取得
+BE -> FE : テキストデータ返却（画面表示）
+
+User -> FE : ダウンロード操作
+FE -> BE : GET /download/txt/{id} または /download/json/{id}
+BE -> TMP : データ取得・変換
+BE -> FE : ダウンロードデータ返却
+
+@enduml
