@@ -17,3 +17,7 @@ output/
 
 # Node.js "部品" フォルダ
 frontend/node_modules
+
+# --- ローカル環境設定 ---
+.python-version
+.zshrc
