@@ -54,35 +54,12 @@ OpenAIのWhisperモデルを活用した、音声ファイルをテキストに�
 - [フロントエンドテスト](./README_frontend_test.md)
 
 
-## 🔧 設定
-
-### Whisperモデルの設定
-
-`backend/app/config.py` ファイルで以下の設定が可能です：
-
-- **MODEL_NAME**: 使用するWhisperモデル（tiny, base, small, medium, large）
-  - `tiny`: 39MB（最も軽量）
-  - `base`: 139MB
-  - `small`: 244MB
-  - `medium`: 769MB
-  - `large`: 1550MB（最も高精度）
-- **LANGUAGE**: 認識言語（デフォルト: `ja`（日本語））
-- **メモリ効率化設定**: メモリ使用量を最適化するための設定
-
-環境変数でも設定可能です：
-
-```bash
-export WHISPER_MODEL=base
-export MEMORY_LIMIT_MB=512
-```
-
 ## 📝 ライセンス
 
 このプロジェクトは個人開発の学習目的で作成されています。フィードバックや提案は大歓迎です。
+- [MT lICENSE]/Users/yg/projects/whisper_transcribe/docs/LICENSE
 
 ## 📚 関連ドキュメント
-
-詳細な使用方法やセットアップ手順については、以下のドキュメントを参照してください：
 
 - [ローカルUI構成（NiceGUI 直結）](./README_LOCAL.md): NiceGUIを使ったローカル開発環境のセットアップ
 - [API構成（FastAPI + UI）](./README_API.md): FastAPIとReactを使ったAPIモードのセットアップ
