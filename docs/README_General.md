@@ -57,7 +57,8 @@ OpenAIのWhisperモデルを活用した、音声ファイルをテキストに�
 ## 📝 ライセンス
 
 このプロジェクトは個人開発の学習目的で作成されています。フィードバックや提案は大歓迎です。
-- [MT lICENSE]/Users/yg/projects/whisper_transcribe/docs/LICENSE
+
+- [MIT LICENSE](./LICENSE)
 
 ## 📚 関連ドキュメント
 
