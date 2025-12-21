@@ -1,0 +1,36 @@
+@startuml
+autonumber
+' 見た目の設定
+skinparam shadowing false
+skinparam actorStyle awesome
+
+actor "ユーザー" as User
+participant "フロントエンド\n(Render / React)" as Frontend
+participant "バックエンドAPI\n(Hugging Face / FastAPI)" as Backend
+participant "AIモデル\n(Whisper)" as AI
+
+User -> Frontend : 音声ファイルを選択して「実行」
+
+note over Frontend : **[スリープ対策]**\n応答がない場合「サーバー起動中」を表示
+
+== 1. ファイルアップロード ==
+Frontend -> Backend : 音声データを送信 (POST /upload)\n※CORS許可が必要
+Backend -> Backend : 一時保存 & UUID発行
+Backend --> Frontend : job_id (UUID) を返却
+
+== 2. 文字起こし依頼 & 進捗確認 ==
+Frontend -> Backend : 処理開始依頼 (POST /transcribe)\n引数: job_id
+Backend -> AI : 非同期で解析を開始
+
+loop ステータス確認 (ポーリング)
+    Frontend -> Backend : 進捗確認 (GET /status/{job_id})
+    Backend --> Frontend : ステータス (queued / processing / done)
+    Frontend -> User : 進捗バーを更新
+end
+
+== 3. 結果取得 ==
+Backend -> Backend : 処理完了後、結果を保存
+Frontend -> Backend : 結果取得 (GET /result/{job_id})
+Backend --> Frontend : 文字起こしテキストを返却
+Frontend -> User : 画面に結果を表示
+@enduml

@@ -17,3 +17,6 @@ output/
 
 # Node.js "部品" フォルダ
 frontend/node_modules
+
+# Macが作成する不要なファイルを無視します
+.DS_Store

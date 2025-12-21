@@ -1,39 +1,74 @@
+
+
+Render (Static Site)
+
+TypeScript
+
+画面表示、通信 (Axios)
+
+バックエンド
+
+FastAPI
+
+Hugging Face Spaces
+
+Python 3.10+
+
+API窓口、進捗管理
+
+AI処理
+
+Whisper
+
+Hugging Face (CPU/GPU)
+
+Python
+
+音声解析・テキスト化
+
+通信プロトコル
+
+HTTPS
+
+JSON通信
+
+-
+
+CORS許可設定が必須
+
+3. システム構造（3層アーキテクチャ：横長レイアウト）
+
+サーバーの物理的な分離を左から右への流れで可視化しています。
+
 @startuml
-skinparam componentStyle rectangle
+' 左から右へ配置する設定（横長にするための命令）
+left to right direction
+
+' デザインの微調整
+skinparam componentStyle uml2
 skinparam packageStyle rectangle
-skinparam defaultTextAlignment center
 
-' プレゼンテーション層
-package "Presentation Layer (フロントエンド / React)" {
-  [User]
-  component "React UI\n(Render Static Site)" as React
+actor "ユーザー" as User
+
+package "プレゼンテーション層 (Render)" {
+    [React UI\n(操作画面・進捗表示)] as UI
 }
 
-' アプリケーション層
-package "Application Layer (FastAPI API)" {
-  component "Upload API\nPOST /api/upload" as UploadAPI
-  component "Transcribe API\nPOST /api/transcribe" as TranscribeAPI
-  component "Result API\nGET /api/result" as ResultAPI
-  component "Status API\nGET /api/status" as StatusAPI
+node "Hugging Face Spaces" {
+    package "アプリケーション層" {
+        [FastAPI API\n(進捗管理・UUID発行)] as API
+    }
+    package "データ・処理層" {
+        [Whisper AI\n(音声解析エンジン)] as AI_Model
+        database "一時ストレージ\n(音声・テキスト保存)" as Store
+    }
 }
 
-' ドメイン・データ層
-package "Domain / Data Layer" {
-  component "Whisper\n音声→テキスト変換" as Whisper
-  component "Temporary File Storage\n(一時保存)" as Storage
-}
-
-' フロー接続
-User --> React : ファイル選択・アップロード
-React --> UploadAPI : POST /api/upload\n音声ファイル送信
-UploadAPI --> Storage : 一時保存
-
-React --> TranscribeAPI : POST /api/transcribe
-TranscribeAPI --> Whisper : テキスト変換
-Whisper --> Storage : 結果保存
-
-React --> StatusAPI : GET /api/status
-React --> ResultAPI : GET /api/result/txt/json
-ResultAPI --> Storage : 結果取得
-
+' 接続の定義
+User --> UI : 1. 音声選択・実行
+UI --> API : 2. HTTPS/JSON (CORS)\n(音声データ / job_id)
+API --> Store : 3. 保存・読込
+API --> AI_Model : 4. 解析指示
+AI_Model --> Store : 5. 結果書込
+API --> UI : 6. 文字起こし結果
 @enduml
