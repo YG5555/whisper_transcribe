@@ -1,20 +1,19 @@
 import { useState, useEffect } from 'react';
 import './App.css';
 
-// # React（りあくと）のメインコンポーネントです
+// # Reactのメインコンポーネントです
 function App() {
   const [file, setFile] = useState<File | null>(null);
   const [transcription, setTranscription] = useState("ここに結果が表示されます");
   const [isLoading, setIsLoading] = useState(false);
   const [apiStatus, setApiStatus] = useState<string>("未確認");
 
-  // # API（えーぴーあい：外部プログラムとの接点）のベースURLを決定する関数
+  // # APIのベースURLを決定する関数
   const getApiBaseUrl = () => {
-    // # 【修正済み】Hugging FaceのURLを正確に記述しました
-    // # セキュリティ上の注意: このURLは公開されるものなので、機密情報（パスワードなど）は含めないでください。
+    // # Hugging FaceのURLを正確に記述しました
     const HF_SPACE_URL = "https://yg5555-whisper.hf.space";
 
-    // # 環境変数 VITE_API_BASE（ゔぃーと・えーぴーあい・べーす）があるか確認します
+    // # 環境変数 VITE_API_BASE があるか確認します
     const envBase = import.meta.env.VITE_API_BASE;
 
     // # 環境変数が設定されていればそれを使用（Renderの設定画面で指定可能）
@@ -22,16 +21,16 @@ function App() {
       return envBase.replace(/\/$/, '');
     }
 
-    // # 本番環境（PROD：ぷろど）であれば、Hugging FaceのURLを返します
+    // # 本番環境（PROD）であれば、Hugging FaceのURLを返します
     if (import.meta.env.PROD) {
       return HF_SPACE_URL;
     }
 
-    // # 自分のPCで開発中であれば localhost（ろーかるほすと）を使用します
+    // # 自分のPCで開発中であれば localhost を使用します
     return 'http://localhost:8000';
   };
 
-  // # サーバーが生きているか（Health Check：へるすちぇっく）確認する関数
+  // # サーバーが生きているか（Health Check）確認する関数
   const checkApiHealth = async () => {
     try {
       const base = getApiBaseUrl();
@@ -39,7 +38,7 @@ function App() {
 
       console.log('接続確認先:', healthUrl);
 
-      // # ネットワーク経由でデータを取得（fetch：ふぇっち）します
+      // # ネットワーク経由でデータを取得（fetch）します
       const response = await fetch(healthUrl);
 
       if (!response.ok) {
@@ -57,7 +56,7 @@ function App() {
     }
   };
 
-  // # コンポーネントが表示された時に1回だけ実行される処理（useEffect：ゆーずえふぇくと）
+  // # コンポーネントが表示された時に1回だけ実行される処理（useEffect）
   useEffect(() => {
     checkApiHealth();
   }, []);
@@ -67,7 +66,7 @@ function App() {
     if (!file) return;
 
     setIsLoading(true);
-    // # ファイルを送るための形式（FormData：ふぉーむでーた）を作成
+    // # ファイルを送るための形式（FormData）を作成
     const formData = new FormData();
     formData.append("file", file);
 
@@ -78,7 +77,7 @@ function App() {
       console.log('送信開始:', apiUrl);
 
       const response = await fetch(apiUrl, {
-        method: "POST", // # データを送る（POST：ぽすと）
+        method: "POST", // # データを送る（POST）
         body: formData,
       });
 
@@ -98,7 +97,7 @@ function App() {
     }
   };
 
-  // # 結果を .txt や .json で保存（Download：だうんろーど）する処理
+  // # 結果を .txt や .json で保存（Download）する処理
   const handleDownload = (format: "txt" | "json") => {
     if (transcription === "ここに結果が表示されます" || transcription.startsWith("エラー")) {
       return;
@@ -108,7 +107,7 @@ function App() {
       ? JSON.stringify({ transcription }, null, 2)
       : transcription;
 
-    // # ブラウザ上で一時的なファイル（Blob：ぶろぶ）を作成してダウンロード
+    // # ブラウザ上で一時的なファイル（Blob）を作成してダウンロード
     const blob = new Blob([content], { type: format === "json" ? "application/json" : "text/plain" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -133,7 +132,7 @@ function App() {
       </div>
 
       <div className="upload-section">
-        {/* # ファイル選択（input：いんぷっと） */}
+        {/* # ファイル選択（input） */}
         <input
           type="file"
           onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)}
@@ -151,7 +150,7 @@ function App() {
 
       <div className="result-container">
         <h2 className="result-title">文字起こし結果</h2>
-        {/* # 結果表示エリア（textarea：てきすとえりあ） */}
+        {/* # 結果表示エリア（textarea） */}
         <textarea
           className="result-text"
           rows={10}
