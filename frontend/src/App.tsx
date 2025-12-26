@@ -1,98 +1,73 @@
 import { useState, useEffect } from 'react';
 import './App.css';
 
+// # React（りあくと）のメインコンポーネントです
 function App() {
   const [file, setFile] = useState<File | null>(null);
   const [transcription, setTranscription] = useState("ここに結果が表示されます");
   const [isLoading, setIsLoading] = useState(false);
   const [apiStatus, setApiStatus] = useState<string>("未確認");
 
-  // APIベースURLを計算する関数
+  // # API（えーぴーあい：外部プログラムとの接点）のベースURLを決定する関数
   const getApiBaseUrl = () => {
-    // 環境変数から取得
+    // # 【修正済み】Hugging FaceのURLを正確に記述しました
+    // # セキュリティ上の注意: このURLは公開されるものなので、機密情報（パスワードなど）は含めないでください。
+    const HF_SPACE_URL = "https://yg5555-whisper.hf.space";
+
+    // # 環境変数 VITE_API_BASE（ゔぃーと・えーぴーあい・べーす）があるか確認します
     const envBase = import.meta.env.VITE_API_BASE;
-    console.log('環境変数 VITE_API_BASE:', envBase);
-    
+
+    // # 環境変数が設定されていればそれを使用（Renderの設定画面で指定可能）
     if (envBase && envBase.trim() !== '') {
       return envBase.replace(/\/$/, '');
     }
-    
-    // フォールバック: 本番環境では現在のドメインを使用
+
+    // # 本番環境（PROD：ぷろど）であれば、Hugging FaceのURLを返します
     if (import.meta.env.PROD) {
-      const currentOrigin = window.location.origin;
-      console.log('現在のオリジン:', currentOrigin);
-      return currentOrigin;
+      return HF_SPACE_URL;
     }
-    
-    // 開発環境では localhost
+
+    // # 自分のPCで開発中であれば localhost（ろーかるほすと）を使用します
     return 'http://localhost:8000';
   };
 
+  // # サーバーが生きているか（Health Check：へるすちぇっく）確認する関数
   const checkApiHealth = async () => {
     try {
       const base = getApiBaseUrl();
       const healthUrl = `${base}/api/health`;
-      const rootUrl = `${base}/`;
 
-      console.log('ヘルスチェック呼び出し:', healthUrl);
-      console.log('ルートパス確認:', rootUrl);
-      console.log('環境変数 VITE_API_BASE:', import.meta.env.VITE_API_BASE);
-      console.log('環境変数 PROD:', import.meta.env.PROD);
-      console.log('計算されたベースURL:', base);
+      console.log('接続確認先:', healthUrl);
 
-      // まずルートパスを試行
-      try {
-        const rootResponse = await fetch(rootUrl);
-        console.log('ルートパスレスポンス:', rootResponse.status, rootResponse.statusText);
-        if (rootResponse.ok) {
-          const rootData = await rootResponse.text();
-          console.log('ルートパスデータ（先頭100文字）:', rootData.substring(0, 100));
-        }
-      } catch (rootError) {
-        console.log('ルートパスエラー:', rootError);
-      }
-
+      // # ネットワーク経由でデータを取得（fetch：ふぇっち）します
       const response = await fetch(healthUrl);
-      console.log('ヘルスチェックレスポンスステータス:', response.status);
-      console.log('レスポンスヘッダー:', Object.fromEntries(response.headers.entries()));
 
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('APIエラーレスポンス:', errorText);
-        setApiStatus(`接続エラー: ${response.status} ${response.statusText}`);
+        setApiStatus(`接続エラー: ${response.status}`);
         return;
       }
 
       const data = await response.json();
-
-      if (response.ok && data.status === 'ok') {
+      if (data.status === 'ok') {
         setApiStatus('接続OK');
-        console.log('API接続正常:', data);
-      } else {
-        setApiStatus(`接続エラー: ${response.status}`);
-        console.error('API接続エラー:', response.status, data);
       }
     } catch (error) {
       setApiStatus('接続失敗');
-      console.error('ヘルスチェックエラー:', error);
-
-      // エラーの詳細を表示
-      if (error instanceof Error) {
-        console.error('エラーメッセージ:', error.message);
-        console.error('エラースタック:', error.stack);
-      }
+      console.error('API接続に失敗しました。URLが正しいか、HF側が起動しているか確認してください:', error);
     }
   };
 
-  // コンポーネントマウント時にヘルスチェック
+  // # コンポーネントが表示された時に1回だけ実行される処理（useEffect：ゆーずえふぇくと）
   useEffect(() => {
     checkApiHealth();
   }, []);
 
+  // # 音声ファイルをアップロードして文字起こしを依頼する処理
   const handleUpload = async () => {
     if (!file) return;
 
     setIsLoading(true);
+    // # ファイルを送るための形式（FormData：ふぉーむでーた）を作成
     const formData = new FormData();
     formData.append("file", file);
 
@@ -100,60 +75,40 @@ function App() {
       const base = getApiBaseUrl();
       const apiUrl = `${base}/api/transcribe`;
 
-      console.log('API呼び出し:', apiUrl);
+      console.log('送信開始:', apiUrl);
 
       const response = await fetch(apiUrl, {
-        method: "POST",
+        method: "POST", // # データを送る（POST：ぽすと）
         body: formData,
       });
 
-      console.log('レスポンスステータス:', response.status);
-      console.log('レスポンスヘッダー:', Object.fromEntries(response.headers.entries()));
-
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('APIエラーレスポンス:', errorText);
-        throw new Error(`APIリクエスト失敗: ${response.status} ${response.statusText}`);
+        throw new Error(`サーバーエラー: ${response.status}`);
       }
 
-      const responseText = await response.text();
-      console.log('レスポンス内容:', responseText);
+      const data = await response.json();
 
-      if (!responseText || responseText.trim() === '') {
-        throw new Error('APIから空のレスポンスが返されました');
-      }
-
-      let data;
-      try {
-        data = JSON.parse(responseText);
-      } catch (parseError) {
-        console.error('JSONパースエラー:', parseError);
-        console.error('パース対象テキスト:', responseText);
-        throw new Error('APIレスポンスのJSONパースに失敗しました');
-      }
-
-      if (!data || typeof data !== 'object') {
-        throw new Error('APIレスポンスが不正な形式です');
-      }
-
-      setTranscription(data.transcription || "文字起こしに失敗しました");
+      // # 成功したら文字起こし結果を画面に反映
+      setTranscription(data.transcription || "結果が空でした");
     } catch (error) {
-      console.error("エラー詳細:", error);
-      setTranscription(`エラーが発生しました: ${error instanceof Error ? error.message : '不明なエラー'}`);
+      console.error("文字起こし失敗:", error);
+      setTranscription(`エラー: ${error instanceof Error ? error.message : '通信に失敗しました'}`);
     } finally {
       setIsLoading(false);
     }
   };
 
+  // # 結果を .txt や .json で保存（Download：だうんろーど）する処理
   const handleDownload = (format: "txt" | "json") => {
     if (transcription === "ここに結果が表示されます" || transcription.startsWith("エラー")) {
       return;
     }
 
-    const content = format === "json" 
+    const content = format === "json"
       ? JSON.stringify({ transcription }, null, 2)
       : transcription;
 
+    // # ブラウザ上で一時的なファイル（Blob：ぶろぶ）を作成してダウンロード
     const blob = new Blob([content], { type: format === "json" ? "application/json" : "text/plain" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -169,19 +124,16 @@ function App() {
     <div className="app-container">
       <h1 className="app-title">Whisper Transcriber</h1>
 
-      {/* APIステータス表示 */}
+      {/* # 接続状態の表示エリア */}
       <div className="api-status">
         <span>API接続状態: {apiStatus}</span>
-        <button
-          onClick={checkApiHealth}
-          className="health-check-button"
-          disabled={isLoading}
-        >
-          接続確認
+        <button onClick={checkApiHealth} className="health-check-button" disabled={isLoading}>
+          再試行
         </button>
       </div>
 
       <div className="upload-section">
+        {/* # ファイル選択（input：いんぷっと） */}
         <input
           type="file"
           onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)}
@@ -193,34 +145,26 @@ function App() {
           onClick={handleUpload}
           disabled={isLoading || !file}
         >
-          {isLoading ? '処理中...' : 'アップロードして文字起こし'}
+          {isLoading ? '解析中...' : 'アップロードして文字起こし'}
         </button>
       </div>
 
       <div className="result-container">
         <h2 className="result-title">文字起こし結果</h2>
+        {/* # 結果表示エリア（textarea：てきすとえりあ） */}
         <textarea
           className="result-text"
           rows={10}
-          cols={40}
           readOnly
           value={transcription}
-          placeholder={isLoading ? '処理中...' : 'ここに結果が表示されます'}
+          placeholder={isLoading ? 'サーバーでWhisperが解析中です。しばらくお待ちください...' : 'ここに結果が表示されます'}
         />
         <div className="download-buttons">
-          <button
-            className="download-button"
-            onClick={() => handleDownload("txt")}
-            disabled={transcription === "ここに結果が表示されます" || transcription.startsWith("エラー")}
-          >
-            .txtとしてダウンロード
+          <button onClick={() => handleDownload("txt")} disabled={isLoading || transcription.startsWith("ここに")}>
+            .txt保存
           </button>
-          <button
-            className="download-button"
-            onClick={() => handleDownload("json")}
-            disabled={transcription === "ここに結果が表示されます" || transcription.startsWith("エラー")}
-          >
-            .jsonとしてダウンロード
+          <button onClick={() => handleDownload("json")} disabled={isLoading || transcription.startsWith("ここに")}>
+            .json保存
           </button>
         </div>
       </div>
