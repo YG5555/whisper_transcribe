@@ -13,10 +13,10 @@ app = FastAPI(title="Whisper Transcribe API", version="1.0.0")
 # --- 1. CORS設定の修正 ---
 # 許可するオリジン（フロントエンドのURL）を指定
 origins = [
-    "https://whisper-transcribe-mdxq.onrender.com",  # ★ 今回のエラー画像で確認されたURL
-    "https://whisper-transcribe-m6xq.onrender.com",  # 以前のURL（念のため残す）
-    "http://localhost:3000",                        # ローカル開発用 (React)
-    "http://127.0.0.1:3000",                      # ローカル開発用 (React)
+    "https://whisper-transcribe-mdxq.onrender.com",  # Renderで公開している画面のURL
+    "https://yg5555-whisper.hf.space",               # ★重要：Hugging Face側のURLも許可リストに追加しました
+    "http://localhost:3000",                        # 自分のPCで開発・テストするときのURL
+    "http://127.0.0.1:3000",                        # 自分のPCで開発・テストするときのURL（予備）
 ]
 
 app.add_middleware(
