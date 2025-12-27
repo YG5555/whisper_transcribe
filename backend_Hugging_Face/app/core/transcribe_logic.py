@@ -12,7 +12,7 @@ import tempfile
 # 4. 'transcribe_file()' 関数内でモデルのロードとアンロードを行うよう修正
 #
 
-MODEL_NAME = "tiny"  # 最小サイズのモデル
+MODEL_NAME = "medium"  # 最小サイズのモデル #モデル　tiny>base>small>medium>large
 
 def transcribe_file(file_path: str) -> str:
     """
